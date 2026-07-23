@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import FastAPI
-from routers import openai
+from api.routers import openai
 
 logging.basicConfig(
     level=logging.INFO,

@@ -5,8 +5,13 @@ import jwt
 import os
 
 from fastapi import APIRouter, Request, HTTPException
+from langchain_core.messages import AIMessage
 
 from models import ChatCompletionRequestBody
+
+from core.langgraph.graph import LangGraphAgent
+
+agent = LangGraphAgent()
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -61,6 +66,13 @@ def chat(request: ChatCompletionRequestBody, req: Request):
 
     logger.info("Body: {0}".format(request))
 
+    ret_value = agent.get_response(
+        chat_id = req.headers.get("x-openwebui-chat-id"),
+        messages = request.messages,
+    )
+    logger.info("ret_value: {}".format(ret_value))
+    last_message: AIMessage = ret_value.get("messages")[-1]
+
     return {
         "id": f"chatcmpl-{uuid.uuid4()}",
         "object": "chat.completion",
@@ -70,8 +82,8 @@ def chat(request: ChatCompletionRequestBody, req: Request):
             {
                 "index": 0,
                 "message": {
+                    "content": last_message.content,
                     "role": "assistant",
-                    "content": "Hello from my FastAPI backend!",
                 },
                 "finish_reason": "stop",
             }
