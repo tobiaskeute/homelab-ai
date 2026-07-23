@@ -2,13 +2,16 @@ import time
 import uuid
 import logging
 import jwt
+import os
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 
 from models import ChatCompletionRequestBody
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+JWT_SECRET = os.getenv("OPENWEBUI_JWT_SECRET")
 
 @router.get("/v1/models")
 def list_models(request: Request):
@@ -30,17 +33,31 @@ def list_models(request: Request):
 def chat(request: ChatCompletionRequestBody, req: Request):
     logger.info("Headers: {0}".format(dict(req.headers)))
 
-    # Extract JWT
+    # Extract and verify JWT
     token = req.headers.get("x-openwebui-user-jwt")
-    if token:
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing JWT token")
+
+    if not JWT_SECRET:
+        logger.warning("OPENWEBUI_JWT_SECRET not set, skipping signature verification")
+        decoded = jwt.decode(token, options={"verify_signature": False})
+    else:
         try:
-            # Decode without verification (verify=False)
-            # To verify, you need the secret key from open-webui
-            decoded = jwt.decode(token, options={"verify_signature": False})
-            logger.info("JWT payload: {0}".format(decoded))
-            # Access fields: decoded["email"], decoded["name"], decoded["role"], etc.
+            decoded = jwt.decode(
+                token,
+                JWT_SECRET,
+                algorithms=["HS256"],
+                issuer="open-webui"
+            )
+            logger.info("JWT verified and decoded: {0}".format(decoded))
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="JWT token expired")
+        except jwt.InvalidIssuerError:
+            raise HTTPException(status_code=401, detail="Invalid JWT issuer")
+        except jwt.InvalidSignatureError:
+            raise HTTPException(status_code=401, detail="Invalid JWT signature")
         except jwt.DecodeError as e:
-            logger.error("JWT decode failed: {0}".format(e))
+            raise HTTPException(status_code=401, detail="JWT decode failed: {0}".format(e))
 
     logger.info("Body: {0}".format(request))
 
