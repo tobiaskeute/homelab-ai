@@ -19,3 +19,9 @@ class ChatCompletionResponse(BaseModel):
     created: int
     model: str
     choices: list
+
+class LangGraphAgentResponse(BaseModel):
+    """
+    This model represents what the LangGraph Agent returns
+    """
+    messages: list

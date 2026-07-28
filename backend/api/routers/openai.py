@@ -66,12 +66,14 @@ def chat(request: ChatCompletionRequestBody, req: Request):
 
     logger.info("Body: {0}".format(request))
 
-    ret_value = agent.get_response(
-        chat_id = req.headers.get("x-openwebui-chat-id"),
-        messages = request.messages,
+    langgraph_agent_reponse = agent.get_response(
+        chat_id = req.headers.get("x-openwebui-chat-id", ""),
+        task_name = req.headers.get("x-task-name", ""),
+        message = request.messages[-1],
     )
-    logger.info("ret_value: {}".format(ret_value))
-    last_message: AIMessage = ret_value.get("messages")[-1]
+    for m in langgraph_agent_reponse.messages:
+        logger.info("message: {}".format(m))
+    last_message: AIMessage = langgraph_agent_reponse.messages[-1]
 
     return {
         "id": f"chatcmpl-{uuid.uuid4()}",

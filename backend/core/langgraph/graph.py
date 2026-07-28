@@ -1,11 +1,23 @@
+import os
 from typing import Optional
 
+from langchain_core.messages import SystemMessage, HumanMessage
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.constants import END, START
 from langgraph.graph import StateGraph, MessagesState
 from langgraph.graph.state import CompiledStateGraph
 
-from models import ChatMessage
+from langchain_mistralai import ChatMistralAI
 
+from models import ChatMessage, LangGraphAgentResponse
+
+llm = ChatMistralAI(
+    model="mistral-small-latest",
+    mistral_api_key=os.environ.get("mistral_api_key"),
+    temperature=0,
+)
+
+checkpointer = InMemorySaver()
 
 class AgentState(MessagesState):
     pass
@@ -30,27 +42,48 @@ class LangGraphAgent():
 
     def _create_graph(self):
         graph = StateGraph(AgentState)
-        graph.add_node("LLM", self._llm)
+        graph.add_node("LLM", self._llm_node)
         graph.add_edge(START, "LLM")
         graph.add_edge("LLM", END)
-        self._graph = graph.compile()
+        self._graph = graph.compile(checkpointer=checkpointer)
 
-    def _llm(self, state: AgentState):
+    def _llm_node(self, state: AgentState):
         """
         Langgraph Node calling the LLM
 
         :param state:
         :return:
         """
-        return {"messages": [{"role": "ai", "content": "This is from langgraph"}]}
+        return {
+            "messages": [
+                llm.invoke(
+                    [
+                        SystemMessage(content="""
+Please respond like a duck
+"""
+                                    )
+                    ]
+                    + state["messages"]
+                )
+            ]
+        }
+
 
     def get_response(
             self,
-            messages: list[ChatMessage],
+            message: ChatMessage,
             chat_id: str,
-    ):
-        graph = self.get_graph()
-        response = graph.invoke(
-            input={"messages": [m.model_dump() for m in messages]}
-        )
-        return response
+            task_name: str = "",
+    ) -> LangGraphAgentResponse:
+        if task_name:
+            # This comes from a task like topic-creation...so do not include the message in the LangGraph context
+            return LangGraphAgentResponse(
+                messages=[llm.invoke([HumanMessage(content=message.content)])]
+            )
+        else:
+            graph = self.get_graph()
+            response = graph.invoke(
+                input={"messages": [message.model_dump()]},
+                config={"configurable": {"thread_id": chat_id}},
+            )
+            return LangGraphAgentResponse.model_validate(response)

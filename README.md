@@ -61,6 +61,13 @@ cp .env.example .env
 docker-compose up -d
 ```
 
+It is important to include the custom headers in the OpenWebUI settings including `x-task-name` in for LangGraph to destuingish between user and task messages.
+```yaml
+{
+  "x-task-name": "{{TASK}}"
+}
+```
+
 4. Access OpenWebUI:
 ```
 http://localhost:3000
