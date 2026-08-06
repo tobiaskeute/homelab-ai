@@ -13,7 +13,7 @@ from models import ChatMessage, LangGraphAgentResponse
 
 llm = ChatMistralAI(
     model="mistral-small-latest",
-    mistral_api_key=os.environ.get("mistral_api_key"),
+    mistral_api_key=os.environ.get("MISTRAL_API_KEY"),
     temperature=0,
 )
 
