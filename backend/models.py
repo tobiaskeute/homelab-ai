@@ -25,3 +25,6 @@ class LangGraphAgentResponse(BaseModel):
     This model represents what the LangGraph Agent returns
     """
     messages: list
+
+class UserContext(BaseModel):
+    username: str

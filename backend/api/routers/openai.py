@@ -68,6 +68,7 @@ def chat(request: ChatCompletionRequestBody, req: Request):
 
     langgraph_agent_reponse = agent.get_response(
         chat_id = req.headers.get("x-openwebui-chat-id", ""),
+        username=decoded.get("name"),
         task_name = req.headers.get("x-task-name", ""),
         message = request.messages[-1],
     )

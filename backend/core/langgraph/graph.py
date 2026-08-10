@@ -9,7 +9,10 @@ from langgraph.graph.state import CompiledStateGraph
 
 from langchain_mistralai import ChatMistralAI
 
-from models import ChatMessage, LangGraphAgentResponse
+from models import ChatMessage, LangGraphAgentResponse, UserContext
+from util.secret_store import SecretStore
+
+secrets = SecretStore("secrets.json")
 
 llm = ChatMistralAI(
     model="mistral-small-latest",
@@ -17,10 +20,16 @@ llm = ChatMistralAI(
     temperature=0,
 )
 
+lite_llm =  ChatMistralAI(
+    model="mistral-small-latest",
+    mistral_api_key=os.environ.get("MISTRAL_API_KEY"),
+    temperature=0.3,
+)
+
 checkpointer = InMemorySaver()
 
 class AgentState(MessagesState):
-    pass
+    user: UserContext
 
 class LangGraphAgent():
     """
@@ -54,6 +63,9 @@ class LangGraphAgent():
         :param state:
         :return:
         """
+
+        vikunja_token = secrets.get(state.get("user").username, "vikunja")
+
         return {
             "messages": [
                 llm.invoke(
@@ -73,17 +85,21 @@ Please respond like a duck
             self,
             message: ChatMessage,
             chat_id: str,
+            username: str,
             task_name: str = "",
     ) -> LangGraphAgentResponse:
         if task_name:
             # This comes from a task like topic-creation...so do not include the message in the LangGraph context
             return LangGraphAgentResponse(
-                messages=[llm.invoke([HumanMessage(content=message.content)])]
+                messages=[lite_llm.invoke([HumanMessage(content=message.content)])]
             )
         else:
             graph = self.get_graph()
             response = graph.invoke(
-                input={"messages": [message.model_dump()]},
+                input={
+                    "messages": [message.model_dump()],
+                    "user": UserContext(username=username),
+                },
                 config={"configurable": {"thread_id": chat_id}},
             )
             return LangGraphAgentResponse.model_validate(response)
