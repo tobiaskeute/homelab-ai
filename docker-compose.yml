@@ -1,9 +1,16 @@
+---
+x-defaults: &x-defaults
+  env_file:
+    - path: ./.env
+      required: false
+  restart: no
+
 services:
   openwebui:
+    <<: *x-defaults
     image: ghcr.io/open-webui/open-webui:main
     ports:
       - "3000:8080"
-    env_file: "openwebui.env"
     volumes:
       - open-webui:/app/backend/data
 volumes:
