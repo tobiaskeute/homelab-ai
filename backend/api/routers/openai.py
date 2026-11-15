@@ -31,7 +31,7 @@ def list_models(request: Request):
 
 
 @router.post("/v1/chat/completions")
-def chat(request: ChatCompletionRequestBody, req: Request):
+async def chat(request: ChatCompletionRequestBody, req: Request):
 
     # Extract and verify JWT
     token = req.headers.get("x-openwebui-user-jwt")
@@ -61,7 +61,7 @@ def chat(request: ChatCompletionRequestBody, req: Request):
 
     agent = get_user_agent(username=decoded.get("name"))
 
-    langgraph_agent_reponse = agent.get_response(
+    langgraph_agent_reponse = await agent.get_response(
         chat_id = req.headers.get("x-openwebui-chat-id", ""),
         message = request.messages[-1],
     )
