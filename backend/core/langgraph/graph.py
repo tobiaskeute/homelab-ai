@@ -114,7 +114,21 @@ class LangGraphAgent():
         self._tool_provider = ToolProvider(self._username)
         self._tool_agent = None
 
-    def get_graph(self):
+    @wrap_tool_call
+    async def handle_tool_errors(
+            request: ToolCallRequest,
+            handler: Callable[[ToolCallRequest], Coroutine],
+    ) -> ToolMessage:
+        """Convert tool exceptions into ToolMessages the model can handle."""
+        try:
+            return await handler(request)
+        except Exception as e:
+            return ToolMessage(
+                content=f"Tool error: Please check your input and try again. ({e})",
+                tool_call_id=request.tool_call["id"],
+            )
+
+    async def get_graph(self):
         """
         Gets the Agents graph. If no graph exists, it will create one first.
         :return:
