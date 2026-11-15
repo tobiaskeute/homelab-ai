@@ -15,5 +15,10 @@ services:
       - open-webui:/app/backend/data
     environment:
       - ENABLE_FORWARD_USER_INFO_HEADERS=true
+  backend:
+    <<: *x-defaults
+    build: .
+    volumes:
+      - ./backend/secrets.json:/backend/secrets.json:ro
 volumes:
   open-webui:
