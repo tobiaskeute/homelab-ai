@@ -1,7 +1,7 @@
 import logging
 import os
-from functools import lru_cache, partial
-from typing import Optional, List, Callable, Coroutine
+from functools import lru_cache
+from typing import Optional, Callable, Coroutine
 
 from langchain.agents.middleware import wrap_tool_call
 from langchain_core.messages import SystemMessage, ToolMessage
@@ -19,12 +19,12 @@ from langchain.agents import create_agent
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
 from core.clients import VikunjaAdapter, MonicaAdapter
-from models import ChatMessage, LangGraphAgentResponse, UserContext
+from util.models import ChatMessage, LangGraphAgentResponse, UserContext
 from util.secret_store import SecretStore
 
 logger = logging.getLogger(__name__)
 
-secrets = SecretStore("secrets.json")
+secrets = SecretStore(os.environ.get("SECRETS_FILE", "/backend/secrets.json"))
 
 llm_provider = os.environ.get("LLM_PROVIDER")
 

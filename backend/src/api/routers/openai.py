@@ -7,7 +7,7 @@ import os
 from fastapi import APIRouter, Request, HTTPException
 from langchain_core.messages import AIMessage
 
-from models import ChatCompletionRequestBody
+from util.models import ChatCompletionRequestBody
 
 from core.langgraph.graph import get_user_agent
 
