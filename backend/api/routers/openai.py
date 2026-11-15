@@ -20,8 +20,6 @@ JWT_SECRET = os.getenv("OPENWEBUI_JWT_SECRET")
 
 @router.get("/v1/models")
 def list_models(request: Request):
-    logger.info("Headers: {0}".format(dict(request.headers)))
-
     return {
         "object": "list",
         "data": [
@@ -36,7 +34,6 @@ def list_models(request: Request):
 
 @router.post("/v1/chat/completions")
 def chat(request: ChatCompletionRequestBody, req: Request):
-    logger.info("Headers: {0}".format(dict(req.headers)))
 
     # Extract and verify JWT
     token = req.headers.get("x-openwebui-user-jwt")
@@ -72,8 +69,6 @@ def chat(request: ChatCompletionRequestBody, req: Request):
         task_name = req.headers.get("x-task-name", ""),
         message = request.messages[-1],
     )
-    for m in langgraph_agent_reponse.messages:
-        logger.info("message: {}".format(m))
     last_message: AIMessage = langgraph_agent_reponse.messages[-1]
 
     return {
