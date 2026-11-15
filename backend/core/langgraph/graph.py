@@ -31,12 +31,18 @@ checkpointer = InMemorySaver()
 class AgentState(MessagesState):
     user: UserContext
 
+@lru_cache()
+def get_user_agent(username: str):
+    return LangGraphAgent(username=username)
+
+
 class LangGraphAgent():
     """
     The agent that gets called when a user sends a message in OpenWebUI
     """
 
-    def __init__(self):
+    def __init__(self, username: str):
+        self._username = username
         self._graph: Optional[CompiledStateGraph] = None
         self._create_graph()
 

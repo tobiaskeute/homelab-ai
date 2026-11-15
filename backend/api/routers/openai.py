@@ -9,9 +9,7 @@ from langchain_core.messages import AIMessage
 
 from models import ChatCompletionRequestBody
 
-from core.langgraph.graph import LangGraphAgent
-
-agent = LangGraphAgent()
+from core.langgraph.graph import get_user_agent
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -61,7 +59,7 @@ def chat(request: ChatCompletionRequestBody, req: Request):
         except jwt.DecodeError as e:
             raise HTTPException(status_code=401, detail="JWT decode failed: {0}".format(e))
 
-    logger.info("Body: {0}".format(request))
+    agent = get_user_agent(username=decoded.get("name"))
 
     langgraph_agent_reponse = agent.get_response(
         chat_id = req.headers.get("x-openwebui-chat-id", ""),
