@@ -2,4 +2,12 @@ fastapi
 fastapi[standard]
 pyjwt
 langgraph
+
 langchain-mistralai
+langchain_google_genai
+langchain-openrouter
+langchain_nvidia_ai_endpoints
+
+fastmcp
+
+langchain
